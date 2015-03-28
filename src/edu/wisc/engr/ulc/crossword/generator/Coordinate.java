@@ -45,4 +45,15 @@ public class Coordinate
     {
         return y;
     }
+    
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (!(obj instanceof Coordinate))
+            return false;
+        
+        Coordinate c = (Coordinate) obj;
+        
+        return (x == c.getX()) && (y == c.getY());
+    }
 }

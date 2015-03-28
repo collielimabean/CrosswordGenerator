@@ -1,5 +1,6 @@
 package edu.wisc.engr.ulc.crossword.generator;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class Crossword
     public Crossword()
     {
         usedCoordinates = new HashSet<Coordinate>();
+        availableCoordinates = new HashMap<>();
         
         for (char c = 'a'; c <= 'z'; c++)
             availableCoordinates.put(c, new Bag<Coordinate>());
@@ -66,12 +68,11 @@ public class Crossword
                     initial = WordOrientation.VERTICAL;
                 
                 root = new Word(word, Coordinate.ORIGIN, initial);
-                
                 registerWord(root);
                 continue;
             }
             
-            // general case
+            //TODO: general case
         }
         
         return true;
@@ -79,7 +80,8 @@ public class Crossword
     
     private void registerWord(Word word)
     {
-        
+        for (Letter l : word.getLetters())
+            usedCoordinates.add(l.getCoordinate());
     }
     
 }

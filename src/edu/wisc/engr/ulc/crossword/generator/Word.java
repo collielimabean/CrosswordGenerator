@@ -35,8 +35,11 @@ public class Word
             int curX = initial.getX();
             int curY = initial.getY();
             
+            // vertical words grow downward (-y axis)
             if (orientation == WordOrientation.VERTICAL)
-                curY += i;
+                curY -= i;
+            
+            // whereas horizontal to the right (+x axis)
             else
                 curX += i;
             
@@ -44,6 +47,23 @@ public class Word
             
             letters[i] = new Letter(word.charAt(i), this, current);
         }
+    }
+    
+    /**
+     * Gets the underlying Letter nodes of the word.
+     * @return the letter nodes
+     */
+    public Letter[] getLetters()
+    {
+        return letters;
+    }
+    
+    public void setBranchWord(final int index, final Word word)
+    {
+        if (index < 0 || index >= letters.length || word == null)
+            throw new IllegalArgumentException();
+        
+        letters[index].setBranch(word);
     }
     
     /**
@@ -61,7 +81,6 @@ public class Word
      */
     public int getLength()
     {
-        assert(letters.length == word.length());
         return letters.length;
     }
 
