@@ -1,6 +1,8 @@
 package edu.wisc.engr.ulc.crossword.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -11,7 +13,7 @@ import java.util.Random;
  * @param <T> The type to be placed inside the Bag
  * @since 3/27/2015
  */
-public class Bag<T>
+public class Bag<T> implements Iterable<T>
 {
     private List<T> elements;
     private Random elementPicker;
@@ -67,5 +69,13 @@ public class Bag<T>
         int index = elementPicker.nextInt(elements.size());
         
         return elements.remove(index);
+    }
+
+    @Override
+    public Iterator<T> iterator()
+    {
+        List<T> copy = new ArrayList<T>(elements);
+        Collections.shuffle(copy);
+        return copy.iterator();
     }
 }
