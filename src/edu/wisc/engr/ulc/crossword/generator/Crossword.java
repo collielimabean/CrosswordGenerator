@@ -19,7 +19,11 @@ import edu.wisc.engr.ulc.crossword.util.Bag;
  */
 public class Crossword
 {
-    private Word root;
+    private static final int LEFT_INDEX = 0;
+    private static final int UP_INDEX = 1;
+    private static final int RIGHT_INDEX = 2;
+    private static final int DOWN_INDEX = 3;
+    
     private Set<Letter> usedLetters;
     private Map<Character, Bag<Letter>> availableBranchLetters;
     
@@ -44,33 +48,45 @@ public class Crossword
         // secondary list of failed insertions
         Queue<String> failed = new LinkedList<String>();
         
+        boolean insertAllSuccessful = true;
+        
         while (!words.isEmpty() || !failed.isEmpty())
         {
             String word = null;
+            boolean fromFailedQueue = false;
             
             // get a word to insert
             // if initial list 
             if (!words.isEmpty())
+            {
                 word = (String) words.pop();
+            }
+                
             else if (!failed.isEmpty())
+            {
                 word = failed.remove();
+                fromFailedQueue = true;
+            }
+              
             else
-                return true; // done
+            {
+                return insertAllSuccessful; // done
+            }
             
             // initial word case
-            if (root == null)
+            if (usedLetters.isEmpty() && availableBranchLetters.isEmpty())
             {
-                WordOrientation initial;
+                WordOrientation initOrientation;
                 
                 // choose initial orientation based on
                 // length of word list
                 if (words.size() % 2 == 0)
-                    initial = WordOrientation.HORIZONTAL;
+                    initOrientation = WordOrientation.HORIZONTAL;
                 else
-                    initial = WordOrientation.VERTICAL;
+                    initOrientation = WordOrientation.VERTICAL;
                 
-                root = new Word(word, Coordinate.ORIGIN, initial);
-                registerWord(root);
+                Word initial = new Word(word, Coordinate.ORIGIN, initOrientation);
+                registerWord(initial);
                 continue;
             }
             
@@ -88,7 +104,7 @@ public class Crossword
             // branch selection
             IndexedCharacter c = null;
             Letter chosenBranch = null;
-            while (!idCh.empty())
+            while (!idCh.empty() && chosenBranch == null)
             {
                 c = idCh.pop();
                 Bag<Letter> branchBag = availableBranchLetters.get(c);
@@ -102,22 +118,24 @@ public class Crossword
                 // that can fit the popped word
                 for (Letter l : branchBag)
                 {       
-                    // get the closest coordinates
+                    // TODO get the closest coordinates
                     // if l.orient == vertical, check left and right.
                     // if l.orient == horizontal, check up and down.
                     // note the flipped nature - chosenBranch must have
                     // opposite orientation of to-be-inserted word
                     
-                    // difference of 1 is OKAY if end letter matches
-                    // otherwise min dist is 2. 
-                    // if conditions satisfied, set chosenBranch, and break!
                 }
             }
 
             // failure case - couldn't find a branch to use
+            // if failed word fails again, then throw it out
             if (chosenBranch == null)
             {
-                failed.add(word);
+                if (!fromFailedQueue)
+                    failed.add(word);
+                else
+                    insertAllSuccessful = false;
+                
                 continue;
             }
 
@@ -128,12 +146,14 @@ public class Crossword
             if (chosenBranch.getParent().getOrientation() == WordOrientation.VERTICAL)
             {
                 newOrient = WordOrientation.HORIZONTAL;
-                newWordCoord = new Coordinate(chosenBranch.getCoordinate().getX() - c.getIndex(), chosenBranch.getCoordinate().getY());
+                newWordCoord = new Coordinate(chosenBranch.getCoordinate().getX() - c.getIndex(),
+                        chosenBranch.getCoordinate().getY());
             }
             else
             {
                 newOrient = WordOrientation.VERTICAL;
-                newWordCoord = new Coordinate(chosenBranch.getCoordinate().getX(), chosenBranch.getCoordinate().getY() + c.getIndex());
+                newWordCoord = new Coordinate(chosenBranch.getCoordinate().getX(),
+                        chosenBranch.getCoordinate().getY() + c.getIndex());
             }
 
             Word newWord = new Word(word, newWordCoord, newOrient);
@@ -141,22 +161,66 @@ public class Crossword
             registerWord(newWord);
         }
         
-        return true;
+        return insertAllSuccessful;
     }
     
-    private Letter getLetterFromCoordinate(Coordinate coord)
+    // XXX: Does not defend against empty crosswords!
+    public char[][] toCharacterBuffer()
     {
-        Letter found = null;
+        int[] bounds = getCrosswordBounds();
+        int width = bounds[RIGHT_INDEX] - bounds[LEFT_INDEX] + 1;
+        int height = bounds[UP_INDEX] - bounds[DOWN_INDEX] + 1;
+        
+        char[][] buffer = new char[width][height];
+        
         for (Letter l : usedLetters)
         {
-            if (l.getCoordinate().equals(coord))
-            {
-                found = l;
-                break;
-            }
+            Coordinate coord = l.getCoordinate();
+            
+            // transform from root origin to buffer
+            int row = coord.getY() - bounds[UP_INDEX];
+            int col = coord.getX() - bounds[LEFT_INDEX];
+            
+            buffer[row][col] = l.getCharacter();
         }
         
-        return found;
+        return buffer;
+    }
+    
+    private int[] getCrosswordBounds()
+    {
+        Letter[] boundaryLetters = new Letter[4];
+        
+        for (Letter l : usedLetters)
+        {
+            // if letter is above the current max y
+            if (boundaryLetters[UP_INDEX] == null 
+                    || boundaryLetters[UP_INDEX].getCoordinate().getY() < l.getCoordinate().getY())
+                boundaryLetters[UP_INDEX] = l;
+            
+            // if letter is below current min y
+            if (boundaryLetters[DOWN_INDEX] == null 
+                    || boundaryLetters[DOWN_INDEX].getCoordinate().getY() > l.getCoordinate().getY())
+                boundaryLetters[DOWN_INDEX] = l;
+            
+            // if letter is further in the -x dir
+            if (boundaryLetters[LEFT_INDEX] == null 
+                    || boundaryLetters[LEFT_INDEX].getCoordinate().getX() > l.getCoordinate().getX())
+                boundaryLetters[LEFT_INDEX] = l;
+            
+            // if letter is further in the +x dir
+            if (boundaryLetters[RIGHT_INDEX] == null 
+                    || boundaryLetters[RIGHT_INDEX].getCoordinate().getX() < l.getCoordinate().getX())
+                boundaryLetters[RIGHT_INDEX] = l;
+        }
+        
+        int[] bounds = new int[4];
+        bounds[LEFT_INDEX] = boundaryLetters[LEFT_INDEX].getCoordinate().getX();
+        bounds[RIGHT_INDEX] = boundaryLetters[RIGHT_INDEX].getCoordinate().getX();
+        bounds[UP_INDEX] = boundaryLetters[UP_INDEX].getCoordinate().getY();
+        bounds[DOWN_INDEX] = boundaryLetters[DOWN_INDEX].getCoordinate().getY();
+        
+        return bounds;
     }
     
     private void registerWord(Word word)
