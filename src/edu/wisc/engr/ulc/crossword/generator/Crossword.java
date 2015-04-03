@@ -123,13 +123,11 @@ public class Crossword
                 // that can fit the popped word
                 for (Letter l : branchBag)
                 {       
-                    // TODO check if we can branch off l
-                    // if l.orient == vertical, check left and right.
-                    // if l.orient == horizontal, check up and down.
-                    // note the flipped nature - chosenBranch must have
-                    // opposite orientation of to-be-inserted word
-                    
-                    chosenBranch = l;
+                    if (checkHorizontalWord(word, c, l) || checkVerticalWord(word, c, l))
+                    {
+                        chosenBranch = l;
+                        break;
+                    }
                 }
             }
 
@@ -142,14 +140,10 @@ public class Crossword
                 else
                     insertAllSuccessful = false;
                 
-                //XXX
-                printCharacterBuffer();
-                
                 continue;
             }
 
-            // get orientation and initial coordinate
-            // false warning - chosenBranch will be set.
+            // get orientation and initial coordinate for insertion
             Coordinate newWordCoord = null;
             WordOrientation newOrient;
             if (chosenBranch.getParent().getOrientation() == WordOrientation.VERTICAL)
@@ -167,16 +161,13 @@ public class Crossword
 
             Word newWord = new Word(word, newWordCoord, newOrient);
             chosenBranch.setBranch(newWord);
+            newWord.getLetters()[c.index].setBranch(chosenBranch.getParent());
             registerWord(newWord);
-            
-            // XXX
-            printCharacterBuffer();
         }
         
         return insertAllSuccessful;
     }
     
-    // XXX debug method - remove when done
     public void printCharacterBuffer()
     {
         System.out.println("-------------------------------");
@@ -230,6 +221,83 @@ public class Crossword
         }
         
         return buffer;
+    }
+    
+    private boolean checkHorizontalWord(String word, IndexedCharacter ic, Letter branch)
+    {
+        if (branch.getParent().getOrientation() == WordOrientation.HORIZONTAL)
+            return false;
+        
+        assert(ic.getCharacter() == branch.getCharacter());
+        
+        Set<Letter> matchY = getAllLettersWithSameYCoordinate(branch.getCoordinate());
+        
+        int wordLeftMostIndex = branch.getCoordinate().getX() - ic.getIndex();
+        int wordRightMostIndex = branch.getCoordinate().getX() + (word.length() - ic.getIndex()) - 1;
+        
+        for (Letter l : matchY)
+        {
+            int l_x_coord = l.getCoordinate().getX();
+            
+            // outside of word location - doesn't matter to us
+            if (l_x_coord < wordLeftMostIndex || l_x_coord > wordRightMostIndex)
+                continue;
+            
+            // if within word location and characters don't match - fail - can't branch here
+            if (l.getCharacter() != word.charAt(l_x_coord - wordLeftMostIndex))
+                return false;
+        }
+        
+        return true;
+    }
+    
+    private boolean checkVerticalWord(String word, IndexedCharacter ic, Letter branch)
+    {
+        if (branch.getParent().getOrientation() == WordOrientation.VERTICAL)
+            return false;
+        
+        assert(ic.getCharacter() == branch.getCharacter());
+        
+        Set<Letter> matchX = getAllLettersWithSameXCoordinate(branch.getCoordinate());
+        
+        int wordHighestIndex = branch.getCoordinate().getY() + ic.getIndex();
+        int wordLowestIndex = branch.getCoordinate().getY() - (word.length() - ic.getIndex()) + 1;
+        
+        for (Letter l : matchX)
+        {
+            int l_y_coord = l.getCoordinate().getY();
+            
+            // out of bounds - continue
+            if (l_y_coord > wordHighestIndex || l_y_coord < wordLowestIndex)
+                continue;
+            
+            if (word.charAt(wordHighestIndex - l_y_coord) != l.getCharacter())
+                return false;
+        }
+        
+        return true;
+    }
+    
+    private Set<Letter> getAllLettersWithSameYCoordinate(Coordinate c)
+    {
+        Set<Letter> sameY = new HashSet<Letter>();
+        
+        for (Letter l : usedLetters)
+            if (l.getCoordinate().getY() == c.getY())
+                sameY.add(l);
+        
+        return sameY;
+    }
+    
+    private Set<Letter> getAllLettersWithSameXCoordinate(Coordinate c)
+    {
+        Set<Letter> sameX = new HashSet<Letter>();
+        
+        for (Letter l : usedLetters)
+            if (l.getCoordinate().getX() == c.getX())
+                sameX.add(l);
+        
+        return sameX;
     }
     
     private int[] getCrosswordBounds()
