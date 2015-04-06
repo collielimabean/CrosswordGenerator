@@ -70,6 +70,16 @@ public class Bag<T> implements Iterable<T>
         
         return elements.remove(index);
     }
+    
+    /**
+     * Removes a specific item in the Bag.
+     * @param item the item to remove
+     * @return true if successful, false otherwise
+     */
+    public boolean remove(T item)
+    {
+        return elements.remove(item);
+    }
 
     @Override
     public Iterator<T> iterator()

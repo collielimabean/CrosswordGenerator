@@ -78,17 +78,4 @@ public class Letter
     {
         this.branch = branch;
     }
-    
-    public boolean equals(Object object)
-    {
-        if (!(object instanceof Letter))
-            return false;
-        
-        Letter l = (Letter) object;
-        
-        return l.getParent().equals(parent) 
-                && letter == l.getCharacter()
-                && l.getCoordinate().equals(location)
-                && (branch == null) ? (branch == l.getBranch()) : (branch.equals(l.getBranch()));
-    }
 }

@@ -19,14 +19,24 @@ import edu.wisc.engr.ulc.crossword.util.Bag;
  */
 public class Crossword
 {
+    /** Index of buffer for crossword bounds - (left) */
     private static final int LEFT_INDEX = 0;
+    
+    /** Index of buffer for crossword bounds - (top) */
     private static final int UP_INDEX = 1;
+    
+    /** Index of buffer for crossword bounds - (right) */
     private static final int RIGHT_INDEX = 2;
+    
+    /** Index of buffer for crossword bounds - (bottom) */
     private static final int DOWN_INDEX = 3;
     
     private Set<Letter> usedLetters;
     private Map<Character, Bag<Letter>> availableBranchLetters;
     
+    /**
+     * Instantiates a new Crossword instance.
+     */
     public Crossword()
     {
         usedLetters = new HashSet<>();
@@ -37,6 +47,11 @@ public class Crossword
             availableBranchLetters.put(c, new Bag<Letter>());
     }
     
+    /**
+     * Adds the words into the Crossword.
+     * @param wordList A stack of words as strings
+     * @return true if all words were inserted successfully, false otherwise
+     */
     public boolean addWordList(final Stack<String> wordList)
     {
         if (wordList == null)
@@ -117,15 +132,17 @@ public class Crossword
                 if (branchBag.size() == 0)
                     continue;
                     
-                
                 // iterate over the bag
                 // attempt to get a good coordinate
                 // that can fit the popped word
                 for (Letter l : branchBag)
-                {       
+                {
+                    assert(l.getBranch() == null);
+                    
                     if (checkHorizontalWord(word, c, l) || checkVerticalWord(word, c, l))
                     {
                         chosenBranch = l;
+                        assert(branchBag.remove(l) == true);
                         break;
                     }
                 }
@@ -158,16 +175,24 @@ public class Crossword
                 newWordCoord = new Coordinate(chosenBranch.getCoordinate().getX(),
                         chosenBranch.getCoordinate().getY() + c.getIndex());
             }
-
+            
+            // initialize the new word
             Word newWord = new Word(word, newWordCoord, newOrient);
+            
+            // set both word branches
             chosenBranch.setBranch(newWord);
             newWord.getLetters()[c.index].setBranch(chosenBranch.getParent());
+            
+            // register word with used coordinate tracker and available branches
             registerWord(newWord);
         }
         
         return insertAllSuccessful;
     }
     
+    /**
+     * Prints the Crossword to stdout.
+     */
     public void printCharacterBuffer()
     {
         System.out.println("-------------------------------");
@@ -197,6 +222,10 @@ public class Crossword
         System.out.println("-------------------------------");
     }
     
+    /**
+     * Returns the Crossword object as a 2D character buffer.
+     * @return the Crossword object as a 2D character buffer.
+     */
     public char[][] toCharacterBuffer()
     {
         int[] bounds = getCrosswordBounds();
@@ -223,6 +252,7 @@ public class Crossword
         return buffer;
     }
     
+    // TODO - improve checking of branch
     private boolean checkHorizontalWord(String word, IndexedCharacter ic, Letter branch)
     {
         if (branch.getParent().getOrientation() == WordOrientation.HORIZONTAL)
@@ -251,6 +281,7 @@ public class Crossword
         return true;
     }
     
+    // TODO: improve checking of branch
     private boolean checkVerticalWord(String word, IndexedCharacter ic, Letter branch)
     {
         if (branch.getParent().getOrientation() == WordOrientation.VERTICAL)

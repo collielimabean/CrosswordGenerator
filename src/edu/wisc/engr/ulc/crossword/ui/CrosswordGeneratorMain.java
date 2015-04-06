@@ -30,7 +30,6 @@ public class CrosswordGeneratorMain extends Application
         
         Crossword c = new Crossword();
         System.out.println("Adding: " + c.addWordList(names));
-        System.out.println();
         c.printCharacterBuffer();
         /* END TEST CODE */
     }
