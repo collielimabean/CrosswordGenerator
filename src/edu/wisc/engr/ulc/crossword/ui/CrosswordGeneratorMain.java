@@ -13,8 +13,8 @@ import edu.wisc.engr.ulc.crossword.generator.Crossword;
 public class CrosswordGeneratorMain extends Application
 {
     private Stage stage;
-    private final double MINIMUM_WINDOW_WIDTH = 500;
-    private final double MINIMUM_WINDOW_HEIGHT = 500;
+    private static final double MINIMUM_WINDOW_WIDTH = 500;
+    private static final double MINIMUM_WINDOW_HEIGHT = 500;
     
     public static void main(String[] args) throws Exception
     {

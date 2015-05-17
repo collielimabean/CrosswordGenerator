@@ -196,28 +196,13 @@ public class Crossword
     public void printCharacterBuffer()
     {
         System.out.println("-------------------------------");
-        char[][] buffer = toCharacterBuffer();
         
-        if (buffer == null)
-        {
-            System.err.println("Failed to print.");
-            return;
-        }
+        String s = this.toString();
         
-        for (int i = 0; i < buffer.length; i++)
-        {
-            for (int j = 0; j < buffer[i].length; j++)
-            {
-                if (buffer[i][j] == 0)
-                    System.out.print(" ");
-                else
-                    System.out.print(buffer[i][j]);
-                
-                System.out.print(" ");
-            }
-            
-            System.out.println();
-        }
+        if (s.equals(" "))
+            System.out.println("Failed to print!");
+        else
+            System.out.println(s);
         
         System.out.println("-------------------------------");
     }
@@ -252,6 +237,33 @@ public class Crossword
         return buffer;
     }
     
+    public String toString()
+    {
+        char[][] buffer = toCharacterBuffer();
+        
+        if (buffer == null)
+            return "";
+        
+        StringBuilder builder = new StringBuilder();
+        
+        for (int i = 0; i < buffer.length; i++)
+        {
+            for (int j = 0; j < buffer[i].length; j++)
+            {
+                if (buffer[i][j] == 0)
+                    builder.append(" ");
+                else
+                    builder.append(buffer[i][j]);
+                
+                builder.append(" ");
+            }
+            
+            builder.append("\n");
+        }
+        
+        return builder.toString();
+    }
+    
     // TODO - improve checking of branch
     private boolean checkHorizontalWord(String word, IndexedCharacter ic, Letter branch)
     {
@@ -260,21 +272,41 @@ public class Crossword
         
         assert(ic.getCharacter() == branch.getCharacter());
         
-        Set<Letter> matchY = getAllLettersWithSameYCoordinate(branch.getCoordinate());
-        
         int wordLeftMostIndex = branch.getCoordinate().getX() - ic.getIndex();
         int wordRightMostIndex = branch.getCoordinate().getX() + (word.length() - ic.getIndex()) - 1;
         
-        for (Letter l : matchY)
+        int branchYCoord = branch.getCoordinate().getY();
+        
+        // surrounding space OK check
+        for (int i = wordLeftMostIndex - 1; i <= wordRightMostIndex + 1; i++)
         {
-            int l_x_coord = l.getCoordinate().getX();
+            if (i >= wordLeftMostIndex && i <= wordRightMostIndex)
+            {
+                // require 1 line clearance on top and bottom for all non-branch words
+                Letter up = getLetterAtCoordinate(new Coordinate(i, branchYCoord + 1));
+                Letter down = getLetterAtCoordinate(new Coordinate(i, branchYCoord - 1));
+                
+                // note: ref check OK
+                if (up != null && up.getBranch() != branch.getBranch())
+                    return false;
+                
+                if (down != null && down.getBranch() != branch.getBranch())
+                    return false;
+            }
             
-            // outside of word location - doesn't matter to us
-            if (l_x_coord < wordLeftMostIndex || l_x_coord > wordRightMostIndex)
+            Letter letter = getLetterAtCoordinate(new Coordinate(i, branchYCoord));
+            
+            // current space is empty - OK
+            if (letter == null)
                 continue;
             
-            // if within word location and characters don't match - fail - can't branch here
-            if (l.getCharacter() != word.charAt(l_x_coord - wordLeftMostIndex))
+            // current letter is on the boundary (outside word by 1 index)
+            // there exists a char on the left/right side - fail
+            if (i < wordLeftMostIndex || i > wordRightMostIndex)
+                return false;
+            
+            // current occupying letter matches letter in actual word
+            else if (letter.getCharacter() != word.charAt(i - wordLeftMostIndex))
                 return false;
         }
         
@@ -289,46 +321,51 @@ public class Crossword
         
         assert(ic.getCharacter() == branch.getCharacter());
         
-        Set<Letter> matchX = getAllLettersWithSameXCoordinate(branch.getCoordinate());
-        
         int wordHighestIndex = branch.getCoordinate().getY() + ic.getIndex();
         int wordLowestIndex = branch.getCoordinate().getY() - (word.length() - ic.getIndex()) + 1;
         
-        for (Letter l : matchX)
+        int branchXCoord = branch.getCoordinate().getX();
+        
+        for (int i = wordHighestIndex + 1; i >= wordLowestIndex - 1; i--)
         {
-            int l_y_coord = l.getCoordinate().getY();
+            if (i <= wordHighestIndex && i >= wordLowestIndex)
+            {
+                // require left and right to have 1 gap
+                Letter left = getLetterAtCoordinate(new Coordinate(branchXCoord - 1, i));
+                Letter right = getLetterAtCoordinate(new Coordinate(branchXCoord + 1, i));
+                
+                if (left != null && left.getBranch() != branch.getBranch())
+                    return false;
+                
+                if (right != null && right.getBranch() != branch.getBranch())
+                    return false;
+            }
             
-            // out of bounds - continue
-            if (l_y_coord > wordHighestIndex || l_y_coord < wordLowestIndex)
+            Letter current = getLetterAtCoordinate(new Coordinate(branchXCoord, i));
+            
+            // nothing here - OK
+            if (current == null)
                 continue;
             
-            if (word.charAt(wordHighestIndex - l_y_coord) != l.getCharacter())
+            // disallow any characters just 1 above or below the word
+            if (i > wordHighestIndex || i < wordLowestIndex)
+                return false;
+            
+            // check if occupying letter match the word at the same index
+            else if (current.getCharacter() != word.charAt(wordHighestIndex - i))
                 return false;
         }
-        
+
         return true;
     }
     
-    private Set<Letter> getAllLettersWithSameYCoordinate(Coordinate c)
+    private Letter getLetterAtCoordinate(Coordinate c)
     {
-        Set<Letter> sameY = new HashSet<Letter>();
-        
         for (Letter l : usedLetters)
-            if (l.getCoordinate().getY() == c.getY())
-                sameY.add(l);
+            if (l.getCoordinate().equals(c))
+                return l;
         
-        return sameY;
-    }
-    
-    private Set<Letter> getAllLettersWithSameXCoordinate(Coordinate c)
-    {
-        Set<Letter> sameX = new HashSet<Letter>();
-        
-        for (Letter l : usedLetters)
-            if (l.getCoordinate().getX() == c.getX())
-                sameX.add(l);
-        
-        return sameX;
+        return null;
     }
     
     private int[] getCrosswordBounds()
@@ -405,6 +442,11 @@ public class Crossword
         public char getCharacter()
         {
             return character;
+        }
+        
+        public String toString()
+        {
+            return character + "@" + index;
         }
     }
 }
