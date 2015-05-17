@@ -1,52 +1,14 @@
 package edu.wisc.engr.ulc.crossword.ui;
 
-import java.io.File;
-import java.util.Scanner;
-import java.util.Stack;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.UIManager;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
-import edu.wisc.engr.ulc.crossword.generator.Crossword;
 
-public class CrosswordGeneratorMain extends Application
+public class CrosswordGeneratorMain
 {
-    private Stage stage;
-    private static final double MINIMUM_WINDOW_WIDTH = 500;
-    private static final double MINIMUM_WINDOW_HEIGHT = 500;
-    
     public static void main(String[] args) throws Exception
     {
-        // Application.launch(CrosswordGeneratorMain.class, (String[]) null);
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         
-        Scanner s = new Scanner(new File("names.txt"));
-        Stack<String> names = new Stack<>();
-        
-        while (s.hasNextLine())
-            names.add(s.nextLine());
-        s.close();
-        
-        Crossword c = new Crossword();
-        System.out.println("Adding: " + c.addWordList(names));
-        System.out.println(c);
-    }
-
-    @Override
-    public void start(Stage primaryStage)
-    {
-        try
-        {
-            stage = primaryStage;
-            stage.setTitle("Crossword Generator");
-            stage.setHeight(MINIMUM_WINDOW_HEIGHT);
-            stage.setWidth(MINIMUM_WINDOW_WIDTH);
-            stage.show();
-        }
-        
-        catch (Exception e)
-        {
-            Logger.getLogger(CrosswordGeneratorMain.class.getName()).log(Level.SEVERE, null, e);
-        }
+        new CrosswordFrame().show();
     }
 }
