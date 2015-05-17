@@ -20,7 +20,6 @@ public class CrosswordGeneratorMain extends Application
     {
         // Application.launch(CrosswordGeneratorMain.class, (String[]) null);
         
-        /* XXX: TEST CODE REMOVE */
         Scanner s = new Scanner(new File("names.txt"));
         Stack<String> names = new Stack<>();
         
@@ -30,8 +29,7 @@ public class CrosswordGeneratorMain extends Application
         
         Crossword c = new Crossword();
         System.out.println("Adding: " + c.addWordList(names));
-        c.printCharacterBuffer();
-        /* END TEST CODE */
+        System.out.println(c);
     }
 
     @Override

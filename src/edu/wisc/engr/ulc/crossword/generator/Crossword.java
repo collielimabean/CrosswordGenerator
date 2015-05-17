@@ -189,24 +189,7 @@ public class Crossword
         
         return insertAllSuccessful;
     }
-    
-    /**
-     * Prints the Crossword to stdout.
-     */
-    public void printCharacterBuffer()
-    {
-        System.out.println("-------------------------------");
-        
-        String s = this.toString();
-        
-        if (s.equals(" "))
-            System.out.println("Failed to print!");
-        else
-            System.out.println(s);
-        
-        System.out.println("-------------------------------");
-    }
-    
+
     /**
      * Returns the Crossword object as a 2D character buffer.
      * @return the Crossword object as a 2D character buffer.
@@ -264,7 +247,6 @@ public class Crossword
         return builder.toString();
     }
     
-    // TODO - improve checking of branch
     private boolean checkHorizontalWord(String word, IndexedCharacter ic, Letter branch)
     {
         if (branch.getParent().getOrientation() == WordOrientation.HORIZONTAL)
@@ -286,11 +268,12 @@ public class Crossword
                 Letter up = getLetterAtCoordinate(new Coordinate(i, branchYCoord + 1));
                 Letter down = getLetterAtCoordinate(new Coordinate(i, branchYCoord - 1));
                 
-                // note: ref check OK
-                if (up != null && up.getBranch() != branch.getBranch())
+                // if there's stuff occupied above/below - it better be the
+                // word we're branching with
+                if (up != null && up.getParent() != branch.getParent())
                     return false;
                 
-                if (down != null && down.getBranch() != branch.getBranch())
+                if (down != null && down.getParent() != branch.getParent())
                     return false;
             }
             
@@ -313,7 +296,6 @@ public class Crossword
         return true;
     }
     
-    // TODO: improve checking of branch
     private boolean checkVerticalWord(String word, IndexedCharacter ic, Letter branch)
     {
         if (branch.getParent().getOrientation() == WordOrientation.VERTICAL)
@@ -334,10 +316,12 @@ public class Crossword
                 Letter left = getLetterAtCoordinate(new Coordinate(branchXCoord - 1, i));
                 Letter right = getLetterAtCoordinate(new Coordinate(branchXCoord + 1, i));
                 
-                if (left != null && left.getBranch() != branch.getBranch())
+                // if there's stuff occupied to the right/left
+                // it better be the word we're branching with
+                if (left != null && left.getParent() != branch.getParent())
                     return false;
                 
-                if (right != null && right.getBranch() != branch.getBranch())
+                if (right != null && right.getParent() != branch.getParent())
                     return false;
             }
             
@@ -442,11 +426,6 @@ public class Crossword
         public char getCharacter()
         {
             return character;
-        }
-        
-        public String toString()
-        {
-            return character + "@" + index;
         }
     }
 }
